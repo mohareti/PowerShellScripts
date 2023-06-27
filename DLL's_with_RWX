@@ -1,0 +1,31 @@
+# Define the root directory to search for DLL files
+$rootDirectory = "C:\Windows\System32"   # Update with your desired directory
+
+# Recursively search for DLL files
+$dllFiles = Get-ChildItem -Path $rootDirectory -Filter "*.dll" -Recurse -File
+
+# Iterate through each DLL file
+foreach ($file in $dllFiles) {
+    try {
+        # Get the ACL (Access Control List) for the file
+        $acl = Get-Acl -Path $file.FullName
+
+        # Check if the DLL file has RWX permissions
+        $hasRWXPermissions = $false
+        foreach ($ace in $acl.Access) {
+            if ($ace.FileSystemRights -band 'Read,Write,Execute' -eq 'Read,Write,Execute') {
+                $hasRWXPermissions = $true
+                break
+            }
+        }
+
+        # Print the DLL file path if it has RWX permissions
+        if ($hasRWXPermissions) {
+            Write-Host "Legitimate DLL with RWX permissions: $($file.FullName)"
+        }
+    }
+    catch {
+        # Ignore any errors encountered while accessing files or checking permissions
+        continue
+    }
+}
